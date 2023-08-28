@@ -1,5 +1,5 @@
 const JWT = require("jsonwebtoken");
-const User = require("./../models/user.model");
+const User = require("../models/transfer.model");
 const CustomError = require("./../utils/custom-error");
 const { role, JWT_SECRET } = require("./../config")
 

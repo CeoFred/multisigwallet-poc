@@ -12,7 +12,7 @@ const walletSchema = new Schema(
     network: {
       type: String,
       trim: true,
-      unique: true,
+      unique: false,
       required: [true, "Network is required"],
     },
     address: {
@@ -32,9 +32,18 @@ const walletSchema = new Schema(
       type: Boolean,
       default: true,
     },
-    maxSignatureApprovals: {
+    minSignatureApprovals: {
       type: Number,
-      required: [true, "Max signature is required"]
+      required: [true, "Min signature is required"],
+      default: 1
+    },
+    assets: {
+      type : [String],
+      required: [true, "Crypto asset must be provided"]
+    },
+    signers: {
+       type : [String],
+       required: [true, "Provide at least one signer"]
     }
   },
   {

@@ -1,7 +1,6 @@
 const router = require("express").Router();
 
-router.use("/auth", require("./auth.route"));
-router.use("/users", require("./user.route"));
+router.use("/transfer", require("./transfer"));
 router.use("/wallet", require("./wallet.route"));
 
 
