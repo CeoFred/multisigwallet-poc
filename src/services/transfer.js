@@ -1,4 +1,6 @@
-const { AlchemyProvider,SigningKey,InfuraProvider,verifyMessage,BaseWallet,parseEther } = require("ethers");
+const { AlchemyProvider,SigningKey,verifyMessage,BaseWallet,parseEther } = require("ethers");
+
+const {NONCE_ACCOUNT_LENGTH,sendAndConfirmTransaction, Keypair,Connection, PublicKey, Transaction, SystemProgram} = require("@solana/web3.js");
 
 const CryptoTransfer = require("../models/transfer.model");
 
@@ -40,7 +42,7 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
 
 
      if (completed) {
-      throw new CustomError("Transfer request is completed")
+      throw new CustomError("Transfer request is already completed")
     }
     const wallet = await WalletServ.getWallet(wallet_id);
 
@@ -78,6 +80,16 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
           })
           transfer_request.hash = hash
       }
+      console.log(network)
+      if (network === "SOL"){
+    const hash = await this.transferSOL({
+      receipient,
+            asset,
+            amount,
+            walletSecretPhrase
+    })
+     transfer_request.hash = hash
+      }
         transfer_request.totalSignatures++
         transfer_request.completed = true;
        
@@ -86,15 +98,49 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
      return transfer_request.hash;
   }
 
+
   async get(id){
      return await CryptoTransfer.findById(id)
   }
 
+  async transferSOL({ receipient, asset, amount, walletSecretPhrase }){
+    try {
+  
+     let seed = Uint8Array.from(walletSecretPhrase.split(','));
+  
+      let accountFromSecret = Keypair.fromSecretKey(seed);
+         const SOLANA_CONNECTION = new Connection("https://devnet.helius-rpc.com/?api-key=e7f2a768-7ae2-416f-bc2a-574cf4fa0cd0", 'confirmed');
+
+    const amountInSol = Number(amount);
+    const amountInLamports = Math.round(amountInSol * Math.pow(10, 9));
+    const wallet = accountFromSecret;
+
+    const recipientAddress = new PublicKey(receipient);
+      
+    let transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: recipientAddress,
+        lamports: amountInLamports
+      })
+    );
+
+    let { blockhash } = await SOLANA_CONNECTION.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = wallet.publicKey;
+  
+    const signature = await sendAndConfirmTransaction(SOLANA_CONNECTION, transaction, [wallet]);
+
+    return signature;
+
+    } catch (error) {
+          throw new CustomError('Error transferring SOL:', error);
+    }
+  }
+
   async transferEth({ receipient, asset, amount, walletSecretPhrase }){
 try {
-  console.log(walletSecretPhrase)
-
-
+  
   if (asset === "native"){
     const provider = new AlchemyProvider('sepolia','CYyojO5sQrox99EHQcCnG4MTgvnQOnY4');
 
@@ -117,7 +163,7 @@ try {
  
   } catch (error) {
     throw new CustomError('Error transferring ETH:', error);
-    return null;
+
   }
   }
 

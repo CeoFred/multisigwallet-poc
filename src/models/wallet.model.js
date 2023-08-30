@@ -25,7 +25,6 @@ const walletSchema = new Schema(
     },
     walletSecretPhrase: {
       type: String,
-      trim: true,
       required: [true, "Wallet Phrase is required"]
     },
     isActive: {

@@ -7,6 +7,9 @@ class WalletContoller {
     if (req.body.network === "ETH"){
         result = await WalletServ.createEthWallet(req.body);
     }
+    if (req.body.network === "SOL"){
+        result = await WalletServ.createSOLWallet(req.body);
+    }
    
     res.status(201).send(response("Wallet created", result._id));
   }

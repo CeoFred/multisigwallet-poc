@@ -1,4 +1,5 @@
 const ethers = require('ethers');
+const web3 = require("@solana/web3.js");
 
 const Wallet = require("./../models/wallet.model");
 const CustomError = require("./../utils/custom-error");
@@ -22,6 +23,23 @@ class WalletService {
     return await new Wallet(data).save();
   }
  
+
+  async createSOLWallet(dto) {
+    const wallet = web3.Keypair.generate();
+
+    const data = {
+  name: dto.name,
+  network: dto.network,
+  address: wallet.publicKey.toBase58(),
+  walletId: 12,
+  walletSecretPhrase: wallet.secretKey.toString(),
+  isActive: true,
+  maxSignatureApprovals: dto.maxSignatureApprovals,
+  signers: dto.signers,
+  assets: dto.assets,
+    }
+    return await new Wallet(data).save();
+  }
 
   async getWallet(id) {
     return await Wallet.findById(id)
