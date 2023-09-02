@@ -2,6 +2,12 @@ const WalletServ = require("./../services/wallet.service");
 const response = require("./../utils/response");
 
 class WalletContoller {
+
+  async getAll(req, res){
+     let result = await WalletServ.getAll();
+    res.status(200).send(response("Wallets retrieved", result));
+  }
+
   async create(req, res) {
         let result;
     if (req.body.network === "ETH"){

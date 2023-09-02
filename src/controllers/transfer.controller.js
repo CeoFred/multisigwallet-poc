@@ -1,4 +1,4 @@
-const CrytpoTransferService = require("../services/transfer");
+const CrytpoTransferService = require("../services/transfer.service");
 const response = require("../utils/response");
 
 class CryptoTransaferContoller {
@@ -12,6 +12,16 @@ class CryptoTransaferContoller {
     res.status(200).send(response("Transfer signature added", result));
   }
 
+ async get(req, res) {
+     const result = await CrytpoTransferService.getAll();
+    res.status(200).send(response("retrieved", result));
+ 
+ }
+ async getSingle(req, res) {
+  const id =  req.params.transfer_id
+    const result = await CrytpoTransferService.getSingle(id);
+    res.status(200).send(response("retrieved", result));
+ }
 
 }
 

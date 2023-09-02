@@ -6,8 +6,14 @@ const CustomError = require("./../utils/custom-error");
 
 
 class WalletService {
+
+  async getAll(){
+     return await Wallet.find({})
+  }
+
   async createEthWallet(dto) {
     const wallet = ethers.Wallet.createRandom();
+
 
     const data = {
   name: dto.name,
@@ -16,7 +22,7 @@ class WalletService {
   walletId: 12,
   walletSecretPhrase: wallet.privateKey,
   isActive: true,
-  maxSignatureApprovals: dto.maxSignatureApprovals,
+  minSignatureApprovals: dto.maxSignatureApprovals,
   signers: dto.signers,
   assets: dto.assets,
     }
@@ -34,7 +40,7 @@ class WalletService {
   walletId: 12,
   walletSecretPhrase: wallet.secretKey.toString(),
   isActive: true,
-  maxSignatureApprovals: dto.maxSignatureApprovals,
+  minSignatureApprovals: dto.maxSignatureApprovals,
   signers: dto.signers,
   assets: dto.assets,
     }

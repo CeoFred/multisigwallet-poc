@@ -4,11 +4,42 @@ const {NONCE_ACCOUNT_LENGTH,sendAndConfirmTransaction, Keypair,Connection, Publi
 
 const CryptoTransfer = require("../models/transfer.model");
 
-const WalletServ = require("../services/wallet.service");
+const WalletServ = require("./wallet.service");
 
 const CustomError = require("../utils/custom-error");
 class CryptoTransferService {
   
+  async getSingle(id){
+    const tf =  await CryptoTransfer.findById(id)
+    const { wallet_id } = tf
+      const wallet = await WalletServ.getWallet(wallet_id);
+
+    return {transfer_request: tf,wallet};
+  }
+
+  async getAll(){
+    const tf =  await CryptoTransfer.find({})
+    let data = [];
+
+    data =  tf.map(async (transferReq) => {
+      const { wallet_id } = transferReq
+      const wallet = await WalletServ.getWallet(wallet_id);
+
+    if (!wallet){
+      return;
+    }
+      // console.log(wallet)
+
+    return {
+      transaction: transferReq,
+      wallet: wallet
+    }
+    });
+
+    data = await Promise.all(data)
+    return data.filter(wallet => wallet)
+  }
+
   async create(dto) {
     const { wallet_id } = dto;
     const wallet = await WalletServ.getWallet(wallet_id);
@@ -56,18 +87,19 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
       throw new CustomError("wallet is not active")
     }
 
-    if (!signers.includes(recoveredAddress.toLowerCase())){
+    if (!signers.includes(recoveredAddress)){
       throw new CustomError(`Invalid signer`)
     }
 
     // check if the user has signed before
-   if (transfer_signers.includes(recoveredAddress.toLowerCase())){
+   if (transfer_signers.includes(recoveredAddress)){
       throw new CustomError(`Already signed`)
     } 
 
     transfer_request.signatures.push(signature)
-    transfer_request.signers.push(address.toLowerCase())
+    transfer_request.signers.push(address)
 
+    transfer_request.totalSignatures++
 
     if (transfer_request.signers.length >= minSignatureApprovals){
       // transfer 
@@ -78,9 +110,9 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
             amount,
             walletSecretPhrase
           })
-          transfer_request.hash = hash
+          transfer_request.hash = `https://sepolia.etherscan.io/tx/${hash}`
       }
-      console.log(network)
+ 
       if (network === "SOL"){
     const hash = await this.transferSOL({
       receipient,
@@ -90,7 +122,6 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
     })
      transfer_request.hash = hash
       }
-        transfer_request.totalSignatures++
         transfer_request.completed = true;
        
     }
@@ -103,13 +134,15 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
      return await CryptoTransfer.findById(id)
   }
 
+ 
+
   async transferSOL({ receipient, asset, amount, walletSecretPhrase }){
     try {
   
      let seed = Uint8Array.from(walletSecretPhrase.split(','));
   
       let accountFromSecret = Keypair.fromSecretKey(seed);
-         const SOLANA_CONNECTION = new Connection("https://devnet.helius-rpc.com/?api-key=e7f2a768-7ae2-416f-bc2a-574cf4fa0cd0", 'confirmed');
+         const SOLANA_CONNECTION = new Connection("https://icy-weathered-seed.solana-devnet.discover.quiknode.pro/c6fbd45e221d5e8443beb79775e80bf8e43221e3/", 'confirmed');
 
     const amountInSol = Number(amount);
     const amountInLamports = Math.round(amountInSol * Math.pow(10, 9));
@@ -131,7 +164,7 @@ if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
   
     const signature = await sendAndConfirmTransaction(SOLANA_CONNECTION, transaction, [wallet]);
 
-    return signature;
+    return `https://solscan.io/tx/${signature}?cluster=devnet`;
 
     } catch (error) {
           throw new CustomError('Error transferring SOL:', error);

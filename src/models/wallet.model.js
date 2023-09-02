@@ -34,7 +34,6 @@ const walletSchema = new Schema(
     minSignatureApprovals: {
       type: Number,
       required: [true, "Min signature is required"],
-      default: 1
     },
     assets: {
       type : [String],
